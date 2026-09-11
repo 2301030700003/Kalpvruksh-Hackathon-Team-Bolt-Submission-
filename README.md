@@ -12,7 +12,7 @@
 [![Security](https://img.shields.io/badge/Security-OWASP_Top_10-ff4757.svg)](https://owasp.org/www-project-top-ten/)
 
 <div align="center">
-  <img src="" alt="[Page 1.png](https://github.com/2301030700003/Kalpvruksh-Hackathon-Team-Bolt-Submission-/blob/8f4b8584ce721578b78c72403c493ae09412943d/Page%201.png)" width="100%" style="border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);" />
+  <img src="" alt="![Project Preview](./Page 1.png)" width="100%" style="border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);" />
   <p><em>Interactive Dual-Pipeline Race Visualizer &amp; Form Playground (Team Bolt — T018)</em></p>
 </div>
 ---
