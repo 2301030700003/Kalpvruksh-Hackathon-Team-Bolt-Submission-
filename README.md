@@ -12,22 +12,23 @@
 [![Security](https://img.shields.io/badge/Security-OWASP_Top_10-ff4757.svg)](https://owasp.org/www-project-top-ten/)
 
 <div align="center">
-  <img src="" alt="![Project Preview](./Page 1.png)" width="100%" style="border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);" />
-  <p><em>Interactive Dual-Pipeline Race Visualizer &amp; Form Playground (Team Bolt — T018)</em></p>
+  <img src="./Page 1.png" alt="Project Preview" width="100%" style="border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);" />
+  <p><em>Interactive Dual-Pipeline Race Visualizer & Form Playground (Team Bolt — T018)</em></p>
 </div>
+
 ---
 
 ## 📌 Project Overview
 
-**Kalpvuksh 2.0 Security Playground** is an interactive, full-lifecycle cybersecurity educational platform designed to demonstrate how common input validation vulnerabilities (**SQL Injection** and **Cross-Site Scripting**) infiltrate modern web applications, and how defense-in-depth engineering protects enterprise infrastructure.
+**Kalpvuksh 2.0 Security Playground** is an interactive, full-lifecycle cybersecurity educational platform designed to demonstrate how common input validation vulnerabilities (**SQL Injection** and **Cross-Site Scripting**) expose enterprise systems to real-world breaches.
 
 The application bridges theoretical concepts into an immediate, intuitive visual experience across **three cohesive architectural tiers**:
 
-1. **Page 1 — Google Form Playground:** An authentic, pixel-perfect Google Form interface allowing users and evaluators to submit legitimate feedback or select/inject weaponized attack payloads with 1-click presets.
+1. **Page 1 — Google Form Playground:** An authentic, pixel-perfect Google Form interface allowing users and evaluators to submit legitimate feedback or select/inject weaponized attack payloads through a guided modal.
 2. **Page 2 — T018 Security Visualizer (Dual Pipeline Race Engine):** A real-time, side-by-side execution visualizer comparing:
    - **🔴 Vulnerable Pipeline (Raw String Concatenation / Unescaped DOM):** Demonstrates how quotes break string delimiters, alter database syntax, or execute arbitrary JavaScript.
-   - **🟢 Secure Pipeline (Parameterized Queries / Contextual Escaping):** Demonstrates how prepared statement binding traps user input as inert literal values, stopping attacks cold at checkpoint barriers.
-3. **Page 3 — Compromised Database Vault:** A live simulation of an enterprise database compromise resulting from successful injection, displaying leaked user credentials, bcrypt password hashes, JWT session tokens, account balances, and security forensics.
+   - **🟢 Secure Pipeline (Parameterized Queries / Contextual Escaping):** Demonstrates how prepared statement binding traps user input as inert literal values, stopping attacks cold at checkpoints.
+3. **Page 3 — Compromised Database Vault:** A live simulation of an enterprise database compromise resulting from successful injection, displaying leaked user credentials, bcrypt password hashes, session tokens, and forensic timelines.
 4. **Split-Screen Demonstration Mode:** Allows simultaneous side-by-side viewing of the Google Form submission flow and the Security Visualizer for classroom or presentation environments.
 
 ---
@@ -51,46 +52,46 @@ The application bridges theoretical concepts into an immediate, intuitive visual
 The following diagram illustrates the unidirectional data flow and dual-pipeline execution model:
 
 ```
-                  ┌──────────────────────────────────────────────┐
-                  │          Page 1: Google Form Client          │
-                  │   - Authentic Google Form UI Clone           │
-                  │   - 1-Click Attack Payload Selector Modal    │
-                  │   - Live Input Sanitization & Previews       │
-                  └──────────────────────┬───────────────────────┘
-                                         │
-                        [ Form Submission / Staging ]
-                                         │
-                                         ▼
-            ┌──────────────────────────────────────────────────────────┐
-            │       Page 2: T018 Dual Pipeline Race Visualizer         │
-            └─────────────┬──────────────────────────────┬─────────────┘
-                          │                              │
-             (Path A: Unvalidated)              (Path B: Defended)
-                          │                              │
-                          ▼                              ▼
-        ┌──────────────────────────────────┐ ┌──────────────────────────────────┐
-        │  🔴 Vulnerable Pipeline          │ │  🟢 Secure Pipeline              │
-        │  • Raw String Concatenation      │ │  • Parameterized Query Binding   │
-        │  • Direct innerHTML Injection    │ │  • Contextual HTML Escaping      │
-        │  • Delimiter Breakout Allowed    │ │  • Input Bound as Inert Literal  │
-        │                                  │ │                                  │
-        │  Track Checkpoints:              │ │  Track Checkpoints:              │
-        │  [0%] Raw Input                  │ │  [0%] Raw Input                  │
-        │  [30%] Concat Stage              │ │  [30%] Tokenization Stage        │
-        │  [60%] Database Execution        │ │  [60%] Checkpoint Barrier (HALT) │
-        │  [88%] 💥 CRITICAL BREACH!       │ │  [88%] ✅ Sanitized Execution    │
-        └─────────────────┬────────────────┘ └──────────────────────────────────┘
-                          │
-                   (On Malicious Payload)
-                          │
-                          ▼
-        ┌──────────────────────────────────────────────────────────────┐
-        │             Page 3: Compromised Database Vault               │
-        │  • Live Breach Incident Report & Forensics Timeline          │
-        │  • Exfiltrated Database Records (Passwords, Session Tokens)  │
-        │  • Stolen Session Tokens & Identity Impersonation Warning    │
-        │  • Interactive Exploit Reset & Remediation Guidance          │
-        └──────────────────────────────────────────────────────────────┘
+                   ┌──────────────────────────────────────────────┐
+                   │          Page 1: Google Form Client          │
+                   │   - Authentic Google Form UI Clone           │
+                   │   - 1-Click Attack Payload Selector Modal    │
+                   │   - Live Input Sanitization & Previews       │
+                   └──────────────────────┬───────────────────────┘
+                                          │
+                         [ Form Submission / Staging ]
+                                          │
+                                          ▼
+             ┌──────────────────────────────────────────────────────────┐
+             │       Page 2: T018 Dual Pipeline Race Visualizer         │
+             └─────────────┬──────────────────────────────┬─────────────┘
+                           │                              │
+              (Path A: Unvalidated)              (Path B: Defended)
+                           │                              │
+                           ▼                              ▼
+         ┌──────────────────────────────────┐ ┌──────────────────────────┐
+         │  🔴 Vulnerable Pipeline          │ │  🟢 Secure Pipeline      │
+         │  • Raw String Concatenation      │ │  • Parameterized Query   │
+         │  • Direct innerHTML Injection    │ │  • Contextual Escaping   │
+         │  • Delimiter Breakout Allowed    │ │  • Input Bound as Inert  │
+         │                                  │ │                          │
+         │  Track Checkpoints:              │ │  Track Checkpoints:      │
+         │  [0%] Raw Input                  │ │  [0%] Raw Input          │
+         │  [30%] Concat Stage              │ │  [30%] Tokenization      │
+         │  [60%] Database Execution        │ │  [60%] Checkpoint (HALT) │
+         │  [88%] 💥 CRITICAL BREACH!       │ │  [88%] ✅ Sanitized      │
+         └─────────────────┬────────────────┘ └──────────────────────────┘
+                           │
+                    (On Malicious Payload)
+                           │
+                           ▼
+         ┌────────────────────────────────────────────────────────────┐
+         │             Page 3: Compromised Database Vault              │
+         │  • Live Breach Incident Report & Forensics Timeline         │
+         │  • Exfiltrated Database Records (Passwords, Tokens)         │
+         │  • Stolen Session Tokens & Identity Impersonation Warning   │
+         │  • Interactive Exploit Reset & Remediation Guidance         │
+         └────────────────────────────────────────────────────────────┘
 ```
 
 ### Component Structure
@@ -117,7 +118,7 @@ The following diagram illustrates the unidirectional data flow and dual-pipeline
 
 ### 1. Dual Execution Pipeline
 - **Smooth 60 FPS Visual Simulation:** Uses `requestAnimationFrame` with SVG transforms to render real-time pipeline execution without UI lag or frame dropping.
-- **Physical Checkpoint Barriers:** Visual indicators at `Raw Input (30%)` and `String Concat / Parameterized (60%)`. Secure pipeline halts attacks at the 60% barrier, while vulnerable queries blast through to the breach box.
+- **Physical Checkpoint Barriers:** Visual indicators at `Raw Input (30%)` and `String Concat / Parameterized (60%)`. Secure pipeline halts attacks at the 60% barrier, while vulnerable queries breach defenses.
 - **Real-Time Code Inspection:** Directly compares `SELECT * FROM users WHERE name = '...'` versus `SELECT * FROM users WHERE name = ? [Param: "..."]`.
 - **Plain-English Explanations:** Real-time breakdown of why the exploit succeeded or was blocked, explaining the mechanics without overwhelming jargon.
 
