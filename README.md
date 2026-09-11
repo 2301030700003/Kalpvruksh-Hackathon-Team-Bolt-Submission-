@@ -11,6 +11,10 @@
 [![TailwindCSS](https://img.shields.io/badge/Tailwind-4.1-38bdf8.svg?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Security](https://img.shields.io/badge/Security-OWASP_Top_10-ff4757.svg)](https://owasp.org/www-project-top-ten/)
 
+<div align="center">
+  <img src="" alt="Kalpvuksh 2.0https://github.com/2301030700003/Kalpvruksh-Hackathon-Team-Bolt-Submission-/blob/main/Page%201.png Security Playground Preview" width="100%" style="border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);" />
+  <p><em>Interactive Dual-Pipeline Race Visualizer &amp; Form Playground (Team Bolt — T018)</em></p>
+</div>
 ---
 
 ## 📌 Project Overview
