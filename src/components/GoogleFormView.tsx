@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { FormSubmission, AttackPresetType } from '../types';
+import { FormSubmission, AttackPresetType, BreachIncident } from '../types';
+import { ATTACK_PAYLOADS, AttackPayload } from '../data/payloads';
+import PayloadSelectorModal from './PayloadSelectorModal';
 import { 
   CheckCircle2, 
   Send, 
@@ -16,25 +18,35 @@ import {
   Sparkles,
   Shield, 
   Database,
-  Code2,
+  Code2, 
   ExternalLink,
   ArrowRight,
   Eye,
   Settings,
   Star,
   Folder,
-  Palette
+  Palette,
+  Terminal,
+  Clock,
+  Trash2,
+  Layers
 } from 'lucide-react';
 
 interface GoogleFormViewProps {
   onSubmitToVisualizer: (data: FormSubmission) => void;
   onSwitchToVisualizer: () => void;
+  onSwitchToExfiltrated?: () => void;
+  onBreachDetected?: (breach: BreachIncident) => void;
+  hasBreachOccurred?: boolean;
   submissions: FormSubmission[];
 }
 
 export default function GoogleFormView({
   onSubmitToVisualizer,
   onSwitchToVisualizer,
+  onSwitchToExfiltrated,
+  onBreachDetected,
+  hasBreachOccurred = false,
   submissions,
 }: GoogleFormViewProps) {
   // Form Tabs: 'questions' | 'responses' | 'settings'
@@ -54,9 +66,46 @@ export default function GoogleFormView({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [lastSubmittedId, setLastSubmittedId] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [selectedPayloadMeta, setSelectedPayloadMeta] = useState<AttackPayload | null>(null);
+  const [isPayloadModalOpen, setIsPayloadModalOpen] = useState(false);
 
   // Theme color for form header
   const [themeColor, setThemeColor] = useState<string>('#673ab7'); // Classic Google Forms purple
+
+  const handleApplyPayload = (payloadItem: AttackPayload) => {
+    setSelectedPayloadMeta(payloadItem);
+    setIsSubmitted(false);
+
+    if (payloadItem.category === 'sqli') {
+      setEmail(payloadItem.payload);
+      setName(
+        payloadItem.id === 'sqli_auth_4'
+          ? 'admin'
+          : payloadItem.isDestructive
+          ? 'Attacker_Dropper'
+          : payloadItem.isTimeDelay
+          ? 'Attacker_TimeProbe'
+          : 'Attacker_SQLi'
+      );
+      setFeedback(`Targeting backend database via ${payloadItem.name}. Impact: ${payloadItem.practicalImpact}`);
+      setEnvironment('Legacy Staging (Vulnerable String Concatenation)');
+      setRating(1);
+      setActiveQuestionId('q2');
+    } else {
+      setFeedback(payloadItem.payload);
+      setName(
+        payloadItem.id.includes('cookie')
+          ? 'Hacker_SessionStealer'
+          : payloadItem.id.includes('obfuscated')
+          ? 'Hacker_Evasion'
+          : 'Pentester_XSS'
+      );
+      setEmail('hacker@exploit.net');
+      setEnvironment('Legacy Staging (Vulnerable String Concatenation)');
+      setRating(1);
+      setActiveQuestionId('q3');
+    }
+  };
 
   const handleFillPreset = (type: AttackPresetType) => {
     if (type === 'normal') {
@@ -65,18 +114,13 @@ export default function GoogleFormView({
       setFeedback('Legitimate user submission. Everything working as expected.');
       setEnvironment('Production (Strict Parameterized Queries)');
       setRating(5);
+      setSelectedPayloadMeta(null);
     } else if (type === 'sqli') {
-      setName('Attacker_SQLi');
-      setEmail("' OR '1'='1");
-      setFeedback('Payload targeting the authentication lookup database query.');
-      setEnvironment('Legacy Staging (Vulnerable String Concatenation)');
-      setRating(1);
+      const p = ATTACK_PAYLOADS.find((item) => item.id === 'sqli_auth_1')!;
+      handleApplyPayload(p);
     } else if (type === 'xss') {
-      setName('Attacker_XSS');
-      setEmail('hacker@exploit.net');
-      setFeedback("<script>alert('XSS SESSION STOLEN!')</script>");
-      setEnvironment('Legacy Staging (Vulnerable String Concatenation)');
-      setRating(1);
+      const p = ATTACK_PAYLOADS.find((item) => item.id === 'xss_script_basic')!;
+      handleApplyPayload(p);
     }
   };
 
@@ -106,14 +150,27 @@ export default function GoogleFormView({
       email.includes("' OR 1=1") ||
       email.includes("' OR '") ||
       email.includes("'; DROP") ||
-      email.includes("'--");
+      email.includes("'--") ||
+      email.includes('" OR ""="') ||
+      email.includes("admin'") ||
+      email.includes("UNION SELECT") ||
+      email.includes("SLEEP(") ||
+      email.includes("WAITFOR DELAY") ||
+      email.includes("pg_sleep");
 
     const hasXSS =
-      feedback.includes('<script>') ||
+      feedback.includes('<script') ||
       feedback.includes('onerror=') ||
+      feedback.includes('onload=') ||
+      feedback.includes('onfocus=') ||
       feedback.includes('javascript:') ||
-      feedback.includes('<img');
+      feedback.includes('<svg') ||
+      feedback.includes('<img') ||
+      feedback.includes('<body') ||
+      feedback.includes('eval(') ||
+      feedback.includes('document.cookie');
 
+    const randId = Math.random().toString(36).substring(2, 7);
     const newSubmission: FormSubmission = {
       id: `sub_${Date.now()}`,
       name,
@@ -124,11 +181,41 @@ export default function GoogleFormView({
       submittedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       hasSQLi,
       hasXSS,
+      role: name.toLowerCase().includes('admin')
+        ? 'Lead Administrator'
+        : name.toLowerCase().includes('sec') || hasXSS || hasSQLi
+        ? 'External Prober'
+        : 'Registered User',
+      sessionToken: `sess_usr_${randId}_${Date.now().toString().slice(-4)}`,
+      passwordHash: `$2b$12$e9${randId}xQp9...`,
+      plainPasswordSimulated: `Pass#${Math.floor(100 + Math.random() * 900)}!`,
+      ipAddress: `192.168.1.${Math.floor(20 + Math.random() * 200)}`,
+      accountBalance: `$${(Math.floor(500 + Math.random() * 8000)).toLocaleString()}.00`,
     };
 
     setLastSubmittedId(newSubmission.id);
     setIsSubmitted(true);
     onSubmitToVisualizer(newSubmission);
+
+    if (hasSQLi) {
+      onBreachDetected?.({
+        id: `breach_form_sqli_${Date.now()}`,
+        timestamp: new Date().toLocaleTimeString(),
+        attackType: 'sqli',
+        payload: { email, comment: feedback },
+        title: 'Form-Injected SQL Injection Incident',
+        summary: `User submitted payload "${email}" via Google Form lookup field, forcing database exfiltration.`,
+      });
+    } else if (hasXSS) {
+      onBreachDetected?.({
+        id: `breach_form_xss_${Date.now()}`,
+        timestamp: new Date().toLocaleTimeString(),
+        attackType: 'xss',
+        payload: { email, comment: feedback },
+        title: 'Form-Injected Cross-Site Scripting Incident',
+        summary: `User submitted script vector via Google Form feedback field, compromising the unescaped DOM pipeline.`,
+      });
+    }
   };
 
   const handleResetForm = () => {
@@ -213,6 +300,30 @@ export default function GoogleFormView({
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2">
+            {onSwitchToExfiltrated && (
+              <button
+                type="button"
+                onClick={onSwitchToExfiltrated}
+                className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm transition-all cursor-pointer ${
+                  hasBreachOccurred
+                    ? 'bg-rose-950/80 hover:bg-rose-900 border border-rose-500/60 text-rose-300 animate-pulse'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
+                title="View Compromised Database Records on Page 3"
+              >
+                <Database className={`w-3.5 h-3.5 ${hasBreachOccurred ? 'text-rose-400' : 'text-gray-500'}`} />
+                <span className="hidden sm:inline">Page 3: Compromised DB</span>
+                <span className="sm:hidden">Page 3</span>
+                {hasBreachOccurred ? (
+                  <span className="bg-rose-600 text-white text-[9px] font-bold px-1.5 py-0.2 rounded uppercase">
+                    Breach
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-gray-400">🔒</span>
+                )}
+              </button>
+            )}
+
             <button
               id="btn-quick-visualizer"
               onClick={onSwitchToVisualizer}
@@ -231,37 +342,134 @@ export default function GoogleFormView({
       <main className="max-w-[770px] w-full mx-auto px-3 sm:px-4 mt-4 flex flex-col gap-4">
 
         {/* Quick Test Vectors Header Banner */}
-        <div className="bg-white border border-purple-200/80 rounded-lg p-3 shadow-xs flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-xs font-medium text-purple-900">
-            <Sparkles className="w-4 h-4 text-[#673ab7]" />
-            <span>Test Payload Presets (1-Click Fill):</span>
+        <div className="bg-white border border-purple-200/80 rounded-xl p-3.5 shadow-xs flex flex-col gap-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs font-semibold text-purple-900">
+              <Sparkles className="w-4 h-4 text-[#673ab7]" />
+              <span>Attack Vector Presets &amp; Educational Payloads:</span>
+            </div>
+
+            <button
+              type="button"
+              id="btn-browse-payload-library"
+              onClick={() => setIsPayloadModalOpen(true)}
+              className="flex items-center gap-1.5 text-xs bg-[#673ab7] hover:bg-[#5e35b1] text-white px-3 py-1.5 rounded-lg font-medium shadow-xs transition-colors cursor-pointer"
+            >
+              <Terminal className="w-3.5 h-3.5" />
+              <span>Browse All 16 Payloads...</span>
+            </button>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+
+          {/* Quick 1-Click Buttons */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
             <button
               type="button"
               id="btn-form-fill-normal"
               onClick={() => handleFillPreset('normal')}
-              className="text-xs bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 px-2.5 py-1 rounded transition-colors cursor-pointer"
+              className="text-xs bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 px-2.5 py-1 rounded-md transition-colors cursor-pointer font-medium"
             >
               Clean User
             </button>
+
+            <span className="text-gray-300 text-xs">|</span>
+
+            {/* SQLi Quick Vectors */}
             <button
               type="button"
-              id="btn-form-fill-sqli"
-              onClick={() => handleFillPreset('sqli')}
-              className="text-xs bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 px-2.5 py-1 rounded transition-colors cursor-pointer"
+              onClick={() => handleApplyPayload(ATTACK_PAYLOADS.find(p => p.id === 'sqli_auth_1')!)}
+              className="text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 px-2 py-1 rounded-md transition-colors cursor-pointer"
+              title="Auth Bypass: ' OR '1'='1"
             >
-              SQL Injection
+              SQLi: ' OR '1'='1
             </button>
             <button
               type="button"
-              id="btn-form-fill-xss"
-              onClick={() => handleFillPreset('xss')}
-              className="text-xs bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 px-2.5 py-1 rounded transition-colors cursor-pointer"
+              onClick={() => handleApplyPayload(ATTACK_PAYLOADS.find(p => p.id === 'sqli_union_users')!)}
+              className="text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 px-2 py-1 rounded-md transition-colors cursor-pointer"
+              title="Union Extract Users & Hashes"
             >
-              XSS Payload
+              SQLi: UNION SELECT
+            </button>
+            <button
+              type="button"
+              onClick={() => handleApplyPayload(ATTACK_PAYLOADS.find(p => p.id === 'sqli_time_mysql')!)}
+              className="text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 px-2 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1"
+              title="Time-Based Blind: SLEEP(5)"
+            >
+              <Clock className="w-3 h-3 text-blue-500" />
+              <span>SQLi: SLEEP(5)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleApplyPayload(ATTACK_PAYLOADS.find(p => p.id === 'sqli_drop_table')!)}
+              className="text-[11px] bg-red-100 hover:bg-red-200 text-red-900 border border-red-300 px-2 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1 font-bold"
+              title="Destructive: '; DROP TABLE users; --"
+            >
+              <Trash2 className="w-3 h-3 text-red-600" />
+              <span>SQLi: DROP TABLE</span>
+            </button>
+
+            <span className="text-gray-300 text-xs">|</span>
+
+            {/* XSS Quick Vectors */}
+            <button
+              type="button"
+              onClick={() => handleApplyPayload(ATTACK_PAYLOADS.find(p => p.id === 'xss_script_basic')!)}
+              className="text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 px-2 py-1 rounded-md transition-colors cursor-pointer"
+              title="Standard Script Tag Alert"
+            >
+              XSS: &lt;script&gt; Alert
+            </button>
+            <button
+              type="button"
+              onClick={() => handleApplyPayload(ATTACK_PAYLOADS.find(p => p.id === 'xss_event_img')!)}
+              className="text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 px-2 py-1 rounded-md transition-colors cursor-pointer"
+              title="Event Handler: <img onerror>"
+            >
+              XSS: &lt;img onerror&gt;
+            </button>
+            <button
+              type="button"
+              onClick={() => handleApplyPayload(ATTACK_PAYLOADS.find(p => p.id === 'xss_attr_cookie_steal')!)}
+              className="text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 px-2 py-1 rounded-md transition-colors cursor-pointer"
+              title="Attribute Breakout & Cookie Steal"
+            >
+              XSS: Cookie Stealer
+            </button>
+            <button
+              type="button"
+              onClick={() => handleApplyPayload(ATTACK_PAYLOADS.find(p => p.id === 'xss_obfuscated_base64')!)}
+              className="text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 px-2 py-1 rounded-md transition-colors cursor-pointer"
+              title="Obfuscated Base64 Eval"
+            >
+              XSS: Base64 Eval
             </button>
           </div>
+
+          {/* Active Payload Indicator Card */}
+          {selectedPayloadMeta && (
+            <div className="mt-1 bg-purple-50/70 border border-purple-200 rounded-lg p-2.5 text-xs text-purple-950 flex items-start justify-between gap-2 animate-in fade-in">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5 font-semibold">
+                  <span className="text-[10px] bg-purple-200 text-purple-900 px-1.5 py-0.2 rounded font-mono">
+                    {selectedPayloadMeta.category.toUpperCase()} • {selectedPayloadMeta.subCategory}
+                  </span>
+                  <span>{selectedPayloadMeta.name}</span>
+                </div>
+                <p className="text-[11px] text-purple-800">
+                  {selectedPayloadMeta.description} — <strong className="text-rose-700">Impact:</strong> {selectedPayloadMeta.practicalImpact}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedPayloadMeta(null)}
+                className="text-purple-400 hover:text-purple-700 text-xs px-1"
+                title="Clear banner"
+              >
+                ✕
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Validation Alert */}
@@ -309,17 +517,30 @@ export default function GoogleFormView({
                       </div>
                     </div>
 
-                    <div className="pt-2">
+                    <div className="pt-2 flex flex-col sm:flex-row gap-2">
                       <button
                         type="button"
                         id="btn-confirm-to-visualizer"
                         onClick={onSwitchToVisualizer}
-                        className="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white text-xs font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                        className="flex-1 bg-[#6366f1] hover:bg-[#4f46e5] text-white text-xs font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
                       >
                         <Shield className="w-4 h-4" />
-                        <span>Inspect in Security Visualizer Track &amp; Race Pipelines</span>
+                        <span>Inspect in Security Visualizer (Page 2)</span>
                         <ArrowRight className="w-4 h-4" />
                       </button>
+
+                      {hasBreachOccurred && onSwitchToExfiltrated && (
+                        <button
+                          type="button"
+                          id="btn-confirm-to-exfiltrated"
+                          onClick={onSwitchToExfiltrated}
+                          className="flex-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer animate-pulse"
+                        >
+                          <Database className="w-4 h-4" />
+                          <span>View Compromised DB (Page 3)</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -785,6 +1006,14 @@ export default function GoogleFormView({
           </div>
         )}
       </main>
+
+      {/* Attack Payload Library Modal */}
+      <PayloadSelectorModal
+        isOpen={isPayloadModalOpen}
+        onClose={() => setIsPayloadModalOpen(false)}
+        onSelectPayload={handleApplyPayload}
+        currentPageContext="form"
+      />
     </div>
   );
 }

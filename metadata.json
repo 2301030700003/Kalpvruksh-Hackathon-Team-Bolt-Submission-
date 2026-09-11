@@ -1,6 +1,6 @@
 {
   "name": "Security & Form Playground",
-  "description": "A 2-page interactive playground featuring a Google Form-style interface and the T018 Security Vulnerability & Remediation Visualizer.",
+  "description": "An interactive security playground featuring a Google Form interface, the T018 Vulnerability Visualizer, and a dedicated 3rd-page Database Vault revealing breached user records upon simulated SQLi or XSS attacks.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
