@@ -44,7 +44,7 @@ The application bridges theoretical concepts into an immediate, intuitive visual
 
 *Team Identifier:* **Team Bolt (T018)**  
 *Primary Contact:* `2301030700003@silveroakuni.ac.in`
-
+*Deployed Link:* `[APP DEPLOY](https://kalpvruksh-hackathon-team-bolt-subm-pi.vercel.app/)`
 ---
 
 ## 🏗️ System Architecture
