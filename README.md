@@ -37,10 +37,10 @@ The application bridges theoretical concepts into an immediate, intuitive visual
 
 | Name / ID | Enrollment Number | Institution | Role & Responsibilities |
 | :--- | :--- | :--- | :--- |
-| **Team Lead / Dev** | `2301030700003` | Silver Oak University | Full-Stack Architecture, Security Engine & UI Pipeline |
-| **Team Member 2** | *(Member 2)* | Silver Oak University | Vulnerability Research, Payload Engineering & Testing |
-| **Team Member 3** | *(Member 3)* | Silver Oak University | Frontend Visualizations, Animation Timing & Form Integration |
-| **Team Member 4** | *(Member 4)* | Silver Oak University | Documentation, Security Analysis & Presentation |
+| **Astha Priyam** | `KV52546283` | Silver Oak University | Full-Stack Architecture, Security Engine & UI Pipeline |
+| **Aman Patel** | `KV90084978` | Silver Oak University | Vulnerability Research, Payload Engineering & Testing |
+| **Nandini Dave** | `KV34843029` | Silver Oak University | Frontend Visualizations, Animation Timing & Form Integration |
+| **Tithi Patel** | `KV77740501` | Silver Oak University | Documentation, Security Analysis & Presentation |
 
 *Team Identifier:* **Team Bolt (T018)**  
 *Primary Contact:* `2301030700003@silveroakuni.ac.in`
