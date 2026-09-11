@@ -1,0 +1,6 @@
+{
+  "name": "Security & Form Playground",
+  "description": "A 2-page interactive playground featuring a Google Form-style interface and the T018 Security Vulnerability & Remediation Visualizer.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
